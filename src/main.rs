@@ -1,0 +1,29 @@
+mod handlers;
+
+use axum::Router;
+use sqlx::SqlitePool;
+use tower_http::services::ServeDir;
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let db = SqlitePool::connect("sqlite::memory:").await?;
+    sqlx::migrate!().run(&db).await?;
+
+    let state = crate::AppState { db };
+
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
+    let app = Router::new()
+        .route("/", axum::routing::get(handlers::hello))
+        .route("/time", axum::routing::get(handlers::time))
+        .nest_service("/static", ServeDir::new("src/static"))
+        .with_state(state);
+
+    axum::serve(listener, app).await?;
+
+    Ok(())
+}
+
+#[derive(Clone)]
+pub struct AppState {
+    pub db: SqlitePool,
+}
