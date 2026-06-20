@@ -106,7 +106,7 @@ pub async fn signup_post(
     }
     let hash = bcrypt::hash(&form.password, bcrypt::DEFAULT_COST)?;
 
-    match user::create_user(&state.db, &form.username, &hash).await {
+    match user::create_user(&state.db, &form.username.trim(), &hash).await {
         Ok(()) => Ok(redirect_with_cookie(
             "/dashboard",
             login_cookie(&form.username),
