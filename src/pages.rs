@@ -53,3 +53,15 @@ pub async fn dashboard(user: LoggedInUser) -> impl IntoResponse {
 pub async fn time(State(_state): State<AppState>) -> impl axum::response::IntoResponse {
     maud::html! { p { "Time: " (chrono::Local::now().format("%H:%M:%S")) } }
 }
+
+pub async fn not_found(State(_state): State<AppState>) -> impl axum::response::IntoResponse {
+    layout(
+        "Not Found",
+        maud::html! {
+            h1 {"404"}
+            p { "The page you're looking for doesn't exist."}
+            a href="/" {"Go home"}
+        },
+        None,
+    )
+}

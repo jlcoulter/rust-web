@@ -36,6 +36,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/dashboard", axum::routing::get(pages::dashboard))
         .route("/logout", axum::routing::post(auth::logout_post))
         .nest_service("/static", ServeDir::new("src/static"))
+        .fallback(pages::not_found)
         .with_state(state);
 
     axum::serve(listener, app).await?;
