@@ -87,7 +87,7 @@
 		 .btn-ghost {
 		 background: none;
 		 border: none;
-		 color: var (--muted);
+		 color: var(--muted);
 		 }
 
 		 .btn-ghost:hover {

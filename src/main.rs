@@ -1,4 +1,8 @@
-mod handlers;
+mod auth;
+mod cookies;
+mod error;
+mod layout;
+mod pages;
 
 use axum::Router;
 use sqlx::SqlitePool;
@@ -13,14 +17,14 @@ async fn main() -> anyhow::Result<()> {
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
     let app = Router::new()
-        .route("/", axum::routing::get(handlers::hello))
-        .route("/time", axum::routing::get(handlers::time))
-        .route("/signup", axum::routing::get(handlers::signup))
-        .route("/signup", axum::routing::post(handlers::signup_post))
-        .route("/login", axum::routing::get(handlers::login))
-        .route("/login", axum::routing::post(handlers::login_post))
-        .route("/dashboard", axum::routing::get(handlers::dashboard))
-        .route("/logout", axum::routing::post(handlers::logout_post))
+        .route("/", axum::routing::get(pages::hello))
+        .route("/time", axum::routing::get(pages::time))
+        .route("/signup", axum::routing::get(auth::signup))
+        .route("/signup", axum::routing::post(auth::signup_post))
+        .route("/login", axum::routing::get(auth::login))
+        .route("/login", axum::routing::post(auth::login_post))
+        .route("/dashboard", axum::routing::get(pages::dashboard))
+        .route("/logout", axum::routing::post(auth::logout_post))
         .nest_service("/static", ServeDir::new("src/static"))
         .with_state(state);
 
