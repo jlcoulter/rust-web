@@ -1,11 +1,11 @@
 use crate::AppState;
 use crate::cookies::login_cookie;
 use crate::cookies::redirect_with_cookie;
+use crate::error::AppError;
 use crate::layout::layout;
 
 use axum::extract::Form;
 use axum::extract::State;
-use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum_extra::extract::cookie::Cookie;
 use serde::Deserialize;
@@ -35,16 +35,15 @@ pub async fn login(State(_state): State<AppState>) -> impl axum::response::IntoR
 pub async fn login_post(
     State(state): State<AppState>,
     Form(form): Form<LoginForm>,
-) -> Result<axum::response::Response, StatusCode> {
+) -> Result<axum::response::Response, AppError> {
     let result =
         sqlx::query_scalar::<_, String>("SELECT password_hash FROM users WHERE username = ?")
             .bind(&form.username)
             .fetch_one(&state.db)
             .await;
-    let stored_hash = result.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let stored_hash = result?;
 
-    let valid = bcrypt::verify(&form.password, &stored_hash)
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let valid = bcrypt::verify(&form.password, &stored_hash)?;
 
     if valid {
         Ok(redirect_with_cookie(
@@ -100,9 +99,8 @@ pub struct SignupForm {
 pub async fn signup_post(
     State(state): State<AppState>,
     Form(form): Form<SignupForm>,
-) -> Result<axum::response::Response, StatusCode> {
-    let hash = bcrypt::hash(&form.password, bcrypt::DEFAULT_COST)
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+) -> Result<axum::response::Response, AppError> {
+    let hash = bcrypt::hash(&form.password, bcrypt::DEFAULT_COST)?;
 
     let result = sqlx::query("INSERT INTO users (username, password_hash) VALUES (?,?)")
         .bind(&form.username)
@@ -128,7 +126,7 @@ pub async fn signup_post(
                 )
                 .into_response())
             } else {
-                Err(StatusCode::INTERNAL_SERVER_ERROR)
+                Err(AppError::Internal(e.into()))
             }
         }
     }

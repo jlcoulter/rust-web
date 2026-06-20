@@ -2,6 +2,7 @@ mod auth;
 mod cookies;
 mod error;
 mod layout;
+mod models;
 mod pages;
 
 use axum::Router;
