@@ -93,3 +93,48 @@
 		 .btn-ghost:hover {
 		 	color: var(--text);
 		 }
+
+		 .cards {
+		 	display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 16px;
+			margin-top: 24px;
+		 }
+
+		 .card {
+		 background: var(--surface);
+		 border: 1px solid var(--border);
+		 border-radius: 8px;
+		 padding: 20px;
+		 }
+
+		 .card h3 {
+		 	margin: 0 0 8px 0;
+		 }
+
+		 .card p {
+		 color: var(--muted);
+		 margin:0;
+		 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

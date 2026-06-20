@@ -90,10 +90,28 @@ impl OptionalFromRequestParts<AppState> for LoggedInUser {
 }
 
 pub async fn dashboard(user: LoggedInUser) -> impl IntoResponse {
+    let hour = chrono::Local::now()
+        .format("%H")
+        .to_string()
+        .parse::<u32>()
+        .unwrap_or(12);
+    let greeting = match hour {
+        0..=11 => "Good morning",
+        12..=17 => "Good afternoon",
+        _ => "Good evening",
+    };
     layout(
         "Dashboard",
         maud::html! {
-            h1 { "Welcome " (user.0) }
+            h2 { (greeting) ", " (user.0) }
+            div class="card" {
+                h3 {"Your Account"}
+                p { "Manage your profile and settings" }
+            }
+                div class="card" {
+                h3 {"Activity"}
+                p {"View your recent activity"}
+            }
         },
         Some(&user.0),
     )
