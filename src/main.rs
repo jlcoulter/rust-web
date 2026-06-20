@@ -11,12 +11,21 @@ use tower_http::services::ServeDir;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::from_default_env()
+                .add_directive("rust_web=debug".parse().unwrap()),
+        )
+        .init();
+
     let db = SqlitePool::connect("sqlite::memory:").await?;
     sqlx::migrate!().run(&db).await?;
 
     let state = crate::AppState { db };
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
+    tracing::info!("listening on {}", listener.local_addr().unwrap());
+
     let app = Router::new()
         .route("/", axum::routing::get(pages::hello))
         .route("/time", axum::routing::get(pages::time))

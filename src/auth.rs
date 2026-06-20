@@ -3,6 +3,7 @@ use crate::cookies::login_cookie;
 use crate::cookies::redirect_with_cookie;
 use crate::error::AppError;
 use crate::layout::layout;
+use crate::models::user;
 
 use axum::extract::Form;
 use axum::extract::State;
@@ -36,12 +37,7 @@ pub async fn login_post(
     State(state): State<AppState>,
     Form(form): Form<LoginForm>,
 ) -> Result<axum::response::Response, AppError> {
-    let result =
-        sqlx::query_scalar::<_, String>("SELECT password_hash FROM users WHERE username = ?")
-            .bind(&form.username)
-            .fetch_one(&state.db)
-            .await;
-    let stored_hash = result?;
+    let stored_hash = user::get_password_hash(&state.db, &form.username).await?;
 
     let valid = bcrypt::verify(&form.password, &stored_hash)?;
 
@@ -102,32 +98,20 @@ pub async fn signup_post(
 ) -> Result<axum::response::Response, AppError> {
     let hash = bcrypt::hash(&form.password, bcrypt::DEFAULT_COST)?;
 
-    let result = sqlx::query("INSERT INTO users (username, password_hash) VALUES (?,?)")
-        .bind(&form.username)
-        .bind(&hash)
-        .execute(&state.db)
-        .await;
-
-    match result {
-        Ok(_) => Ok(redirect_with_cookie(
+    match user::create_user(&state.db, &form.username, &hash).await {
+        Ok(()) => Ok(redirect_with_cookie(
             "/dashboard",
             login_cookie(&form.username),
         )),
-        Err(e) => {
-            let msg = e.to_string();
-            if msg.contains("UNIQUE constraint") {
-                Ok(layout(
-                    "Signup",
-                    maud::html! {
-                        p { "Username already taken" }
-                        a href="/signup" { "Try again" }
-                    },
-                    None,
-                )
-                .into_response())
-            } else {
-                Err(AppError::Internal(e.into()))
-            }
-        }
+        Err(AppError::DuplicateUser) => Ok(layout(
+            "Signup",
+            maud::html! {
+                p { "Username already taken" }
+                a href="/signup" { "Try again" }
+            },
+            None,
+        )
+        .into_response()),
+        Err(e) => Err(e),
     }
 }
