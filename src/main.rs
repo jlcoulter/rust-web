@@ -20,6 +20,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/login", axum::routing::get(handlers::login))
         .route("/login", axum::routing::post(handlers::login_post))
         .route("/dashboard", axum::routing::get(handlers::dashboard))
+        .route("/logout", axum::routing::post(handlers::logout_post))
         .nest_service("/static", ServeDir::new("src/static"))
         .with_state(state);
 
