@@ -4,9 +4,10 @@ mod error;
 mod layout;
 mod models;
 mod pages;
+use std::str::FromStr;
 
 use axum::Router;
-use sqlx::SqlitePool;
+use sqlx::{SqlitePool, sqlite::SqliteConnectOptions};
 use tower_http::services::ServeDir;
 
 #[tokio::main]
@@ -18,7 +19,9 @@ async fn main() -> anyhow::Result<()> {
         )
         .init();
 
-    let db = SqlitePool::connect("sqlite::memory:").await?;
+    let connection_string = "sqlite://data.db";
+    let options = SqliteConnectOptions::from_str(connection_string)?.create_if_missing(true);
+    let db = SqlitePool::connect_with(options).await?;
     sqlx::migrate!().run(&db).await?;
 
     let state = crate::AppState { db };
