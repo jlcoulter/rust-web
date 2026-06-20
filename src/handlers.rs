@@ -102,7 +102,7 @@ pub async fn login_post(
             .http_only(true)
             .path("/")
             .build();
-        let mut resp = axum::response::Redirect::to("/").into_response();
+        let mut resp = axum::response::Redirect::to("/dashboard").into_response();
         resp.headers_mut().insert(
             axum::http::header::SET_COOKIE,
             cookie.to_string().parse().unwrap(),
