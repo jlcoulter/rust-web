@@ -12,15 +12,15 @@ A bitesized, step-by-step guide to building a web server with axum + htmx + maud
 - [x] **6. Shared state** — `AppState { db: SqlitePool }` with `#[derive(Clone)]`, `.with_state(state)`
 - [x] **7. Migrations** — `sqlx::migrate!()`, `migrations/0001_init.sql` with users table
 - [x] **8. bcrypt dep** — added to Cargo.toml
-- [ ] **9. Signup form (GET)** — `/signup` route renders HTML form with username + password fields
+- [x] **9. Signup form (GET)** — `/signup` route renders HTML form with username + password fields
 
 ## Current Step
 
-Start with step 9: add a GET `/signup` route that renders a form.
+Start with step 11: add GET and POST `/login` routes.
 
 ## Remaining Steps
 
-- [ ] **10. Signup handler (POST)** — receives form data, hashes password with bcrypt, inserts into DB
+- [x] **10. Signup handler (POST)** — receives form data, hashes password with bcrypt, inserts into DB
 
 ## Remaining Steps
 

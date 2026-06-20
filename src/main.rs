@@ -15,6 +15,11 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .route("/", axum::routing::get(handlers::hello))
         .route("/time", axum::routing::get(handlers::time))
+        .route("/signup", axum::routing::get(handlers::signup))
+        .route("/signup", axum::routing::post(handlers::signup_post))
+        .route("/login", axum::routing::get(handlers::login))
+        .route("/login", axum::routing::post(handlers::login_post))
+        .route("/dashboard", axum::routing::get(handlers::dashboard))
         .nest_service("/static", ServeDir::new("src/static"))
         .with_state(state);
 
