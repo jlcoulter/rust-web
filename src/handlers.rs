@@ -33,6 +33,7 @@ fn layout(title: &str, content: maud::Markup, username: Option<&str>) -> maud::M
             head {
                 title { (title) }
                 script src="/static/htmx.min.js" {}
+                link rel="stylesheet" href="/static/style.css"{}
             }
             body {
                 header {
@@ -40,12 +41,12 @@ fn layout(title: &str, content: maud::Markup, username: Option<&str>) -> maud::M
                         span { "Hello " (name) }
                         form action = "/logout"
                         method = "post" {
-                            button type = "submit" {"Logout"}
+                            button type = "submit" class="btn btn-ghost" {"Logout"}
                         }
                     } @else {
-                        a href = "/login" { "Login" }
+                        a href = "/login" class="btn" { "Login" }
                         " "
-                        a href = "/signup" {"Sign up"}
+                        a href = "/signup" class="btn" {"Sign up"}
                     }
                 }
                 (content)
@@ -168,13 +169,17 @@ pub async fn logout_post(State(_state): State<AppState>) -> impl IntoResponse {
 }
 
 pub async fn signup(State(_state): State<AppState>) -> impl axum::response::IntoResponse {
-    maud::html! {
-        form action = "/signup" method = "post" {
-                        label { "Username" input type = "text" name = "username"; }
-                        label { "Password" input type = "password" name = "password";}
-                        button type="submit" { "Sign up" }
-                }
-    }
+    layout(
+        "Sign up",
+        maud::html! {
+            form action = "/signup" method = "post" {
+                            label { "Username" input type = "text" name = "username"; }
+                            label { "Password" input type = "password" name = "password";}
+                            button type="submit" { "Sign up" }
+                    }
+        },
+        None,
+    )
 }
 
 #[derive(Deserialize)]
