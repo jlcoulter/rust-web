@@ -101,7 +101,7 @@ pub async fn signup_post(
     }
     if form.password.len() < 8 {
         return Err(AppError::BadRequest(
-            "Passwordmust be at least 8 characters".to_string(),
+            "Password must be at least 8 characters".to_string(),
         ));
     }
     let hash = bcrypt::hash(&form.password, bcrypt::DEFAULT_COST)?;
