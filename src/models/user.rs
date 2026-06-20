@@ -23,12 +23,15 @@ pub async fn create_user(
 
     match result {
         Ok(_) => Ok(()),
-        Err(e) => {
-            if e.to_string().contains("UNIQUE constraint") {
-                Err(AppError::DuplicateUser)
-            } else {
-                Err(AppError::Internal(e.into()))
-            }
+        Err(sqlx::Error::Database(ref db_err))
+            if db_err
+                .code()
+                .map_or(false, |c| c == SQLITE_CONSTRAINT_UNIQUE) =>
+        {
+            Err(AppError::DuplicateUser)
         }
+        Err(e) => Err(AppError::Internal(e.into())),
     }
 }
+
+const SQLITE_CONSTRAINT_UNIQUE: &str = "2067";
