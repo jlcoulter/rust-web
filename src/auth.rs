@@ -96,6 +96,14 @@ pub async fn signup_post(
     State(state): State<AppState>,
     Form(form): Form<SignupForm>,
 ) -> Result<axum::response::Response, AppError> {
+    if form.username.trim().is_empty() {
+        return Err(AppError::BadRequest("Username is required".to_string()));
+    }
+    if form.password.len() < 8 {
+        return Err(AppError::BadRequest(
+            "Passwordmust be at least 8 characters".to_string(),
+        ));
+    }
     let hash = bcrypt::hash(&form.password, bcrypt::DEFAULT_COST)?;
 
     match user::create_user(&state.db, &form.username, &hash).await {
@@ -107,6 +115,15 @@ pub async fn signup_post(
             "Signup",
             maud::html! {
                 p { "Username already taken" }
+                a href="/signup" { "Try again" }
+            },
+            None,
+        )
+        .into_response()),
+        Err(AppError::BadRequest(msg)) => Ok(layout(
+            "Signup",
+            maud::html! {
+                p { (msg) }
                 a href="/signup" { "Try again" }
             },
             None,
