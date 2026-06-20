@@ -26,7 +26,18 @@ async fn main() -> anyhow::Result<()> {
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
     tracing::info!("listening on {}", listener.local_addr().unwrap());
 
-    let app = Router::new()
+    axum::serve(listener, app(state)).await?;
+
+    Ok(())
+}
+
+#[derive(Clone)]
+pub struct AppState {
+    pub db: SqlitePool,
+}
+
+fn app(state: AppState) -> Router {
+    Router::new()
         .route("/", axum::routing::get(pages::hello))
         .route("/time", axum::routing::get(pages::time))
         .route("/signup", axum::routing::get(auth::signup))
@@ -37,14 +48,5 @@ async fn main() -> anyhow::Result<()> {
         .route("/logout", axum::routing::post(auth::logout_post))
         .nest_service("/static", ServeDir::new("src/static"))
         .fallback(pages::not_found)
-        .with_state(state);
-
-    axum::serve(listener, app).await?;
-
-    Ok(())
-}
-
-#[derive(Clone)]
-pub struct AppState {
-    pub db: SqlitePool,
+        .with_state(state)
 }
