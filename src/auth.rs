@@ -8,6 +8,7 @@ use crate::models::user;
 use axum::extract::Form;
 use axum::extract::State;
 use axum::response::IntoResponse;
+use axum::response::Redirect;
 use axum_extra::extract::SignedCookieJar;
 use serde::Deserialize;
 
@@ -17,15 +18,16 @@ pub struct LoginForm {
     password: String,
 }
 
-pub async fn login(State(_state): State<AppState>) -> impl axum::response::IntoResponse {
+pub async fn login(State(_state): State<AppState>) -> impl IntoResponse {
     layout(
         "Login",
         maud::html! {
-            form action = "/login" method = "post" {
-                            label { "Username" input type = "text" name = "username"; }
-                            label { "Password" input type = "password" name = "password";}
-                            button type="submit" { "Login" }
-                    }
+            form action="/login" hx-post="/login" hx-target="#error-box" method="post" {
+                label { "Username" input type="text" name="username"; }
+                label { "Password" input type="password" name="password"; }
+                button type="submit" { "Login" }
+            }
+            div id="error-box" {}
         },
         None,
     )
@@ -36,51 +38,35 @@ pub async fn login_post(
     jar: SignedCookieJar,
     Form(form): Form<LoginForm>,
 ) -> Result<axum::response::Response, AppError> {
-    match user::get_password_hash(&state.db, &form.username).await? {
+    match user::get_password_hash(state.db(), &form.username).await? {
         Some(stored_hash) => {
             let valid = bcrypt::verify(&form.password, &stored_hash)?;
-
             if valid {
                 let jar = jar.add(login_cookie(&form.username));
-                Ok((jar, axum::response::Redirect::to("/dashboard")).into_response())
+                Ok((jar, [("HX-Redirect", "/dashboard")]).into_response())
             } else {
-                Ok(layout(
-                    "Login",
-                    maud::html! {
-                        p { "Invalid username or password" }
-                        a href = "/login" {"Try again"}
-                    },
-                    None,
-                )
-                .into_response())
+                Err(AppError::Unauthorized("Invalid username or password".to_string()))
             }
         }
-        None => Ok(layout(
-            "Login",
-            maud::html! {
-                p {"Invalid username or password"}
-                a href = "/login" {"Try again"}
-            },
-            None,
-        )
-        .into_response()),
+        None => Err(AppError::Unauthorized("Invalid username or password".to_string())),
     }
 }
 
 pub async fn logout_post(jar: SignedCookieJar) -> impl IntoResponse {
     let jar = jar.add(logout_cookie());
-    (jar, axum::response::Redirect::to("/"))
+    (jar, Redirect::to("/"))
 }
 
-pub async fn signup(State(_state): State<AppState>) -> impl axum::response::IntoResponse {
+pub async fn signup(State(_state): State<AppState>) -> impl IntoResponse {
     layout(
         "Sign up",
         maud::html! {
-            form action = "/signup" method = "post" {
-                            label { "Username" input type = "text" name = "username"; }
-                            label { "Password" input type = "password" name = "password";}
-                            button type="submit" { "Sign up" }
-                    }
+            form action="/signup" hx-post="/signup" hx-target="#error-box" method="post" {
+                label { "Username" input type="text" name="username"; }
+                label { "Password" input type="password" name="password"; }
+                button type="submit" { "Sign up" }
+            }
+            div id="error-box" {}
         },
         None,
     )
@@ -101,35 +87,11 @@ pub async fn signup_post(
         return Err(AppError::BadRequest("Username is required".to_string()));
     }
     if form.password.len() < 8 {
-        return Err(AppError::BadRequest(
-            "Password must be at least 8 characters".to_string(),
-        ));
+        return Err(AppError::BadRequest("Password must be at least 8 characters".to_string()));
     }
     let hash = bcrypt::hash(&form.password, bcrypt::DEFAULT_COST)?;
 
-    match user::create_user(&state.db, &form.username.trim(), &hash).await {
-        Ok(()) => {
-            let jar = jar.add(login_cookie(&form.username));
-            Ok((jar, axum::response::Redirect::to("/dashboard")).into_response())
-        }
-        Err(AppError::DuplicateUser) => Ok(layout(
-            "Signup",
-            maud::html! {
-                p { "Username already taken" }
-                a href="/signup" { "Try again" }
-            },
-            None,
-        )
-        .into_response()),
-        Err(AppError::BadRequest(msg)) => Ok(layout(
-            "Signup",
-            maud::html! {
-                p { (msg) }
-                a href="/signup" { "Try again" }
-            },
-            None,
-        )
-        .into_response()),
-        Err(e) => Err(e),
-    }
+    user::create_user(state.db(), &form.username.trim(), &hash).await?;
+    let jar = jar.add(login_cookie(&form.username));
+    Ok((jar, [("HX-Redirect", "/dashboard")]).into_response())
 }

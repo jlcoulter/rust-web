@@ -38,8 +38,14 @@ async fn main() -> anyhow::Result<()> {
 
 #[derive(Clone)]
 pub struct AppState {
-    pub db: SqlitePool,
+    db: SqlitePool,
     pub key: Key,
+}
+
+impl AppState {
+    pub fn db(&self) -> &SqlitePool {
+        &self.db
+    }
 }
 
 fn app(state: AppState) -> Router {

@@ -6,6 +6,9 @@ pub fn layout(title: &str, content: maud::Markup, username: Option<&LoggedInUser
             head {
                 title { (title) }
                 script src="/static/htmx.min.js" {}
+                script {
+                    (maud::PreEscaped("document.addEventListener('htmx:beforeSwap', function(e) { if(e.detail.xhr.status >= 400) e.detail.shouldSwap = true; });"))
+                }
                 link rel="stylesheet" href="/static/style.css"{}
             }
             body {
@@ -25,5 +28,11 @@ pub fn layout(title: &str, content: maud::Markup, username: Option<&LoggedInUser
                 (content)
             }
         }
+    }
+}
+
+pub fn error_box(message: &str) -> maud::Markup {
+    maud::html! {
+        div class="error" { (message) }
     }
 }

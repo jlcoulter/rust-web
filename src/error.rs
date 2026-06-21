@@ -1,10 +1,12 @@
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::response::Response;
+use crate::layout::error_box;
 
 pub enum AppError {
     Internal(anyhow::Error),
     BadRequest(String),
+    Unauthorized(String),
     DuplicateUser,
 }
 
@@ -27,9 +29,14 @@ impl IntoResponse for AppError {
                 tracing::error!(%err, "internal error");
                 (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
             }
-            AppError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg).into_response(),
+            AppError::BadRequest(msg) => {
+                (StatusCode::BAD_REQUEST, error_box(&msg)).into_response()
+            }
+            AppError::Unauthorized(msg) => {
+                (StatusCode::UNAUTHORIZED, error_box(&msg)).into_response()
+            }
             AppError::DuplicateUser => {
-                (StatusCode::CONFLICT, "Username already taken").into_response()
+                (StatusCode::CONFLICT, error_box("Username already taken")).into_response()
             }
         }
     }
