@@ -62,7 +62,7 @@ pub async fn login_post(
             "Login",
             maud::html! {
                 p {"Invalid username or password"}
-                a hred = "/login" {"Try again"}
+                a href = "/login" {"Try again"}
             },
             None,
         )
