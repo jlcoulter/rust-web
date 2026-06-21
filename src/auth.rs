@@ -1,6 +1,6 @@
 use crate::AppState;
 use crate::cookies::login_cookie;
-use crate::cookies::redirect_with_cookie;
+use crate::cookies::logout_cookie;
 use crate::error::AppError;
 use crate::layout::layout;
 use crate::models::user;
@@ -8,7 +8,7 @@ use crate::models::user;
 use axum::extract::Form;
 use axum::extract::State;
 use axum::response::IntoResponse;
-use axum_extra::extract::cookie::Cookie;
+use axum_extra::extract::SignedCookieJar;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -35,6 +35,7 @@ pub async fn login(State(_state): State<AppState>) -> impl axum::response::IntoR
 
 pub async fn login_post(
     State(state): State<AppState>,
+    jar: SignedCookieJar,
     Form(form): Form<LoginForm>,
 ) -> Result<axum::response::Response, AppError> {
     match user::get_password_hash(&state.db, &form.username).await? {
@@ -42,10 +43,8 @@ pub async fn login_post(
             let valid = bcrypt::verify(&form.password, &stored_hash)?;
 
             if valid {
-                Ok(redirect_with_cookie(
-                    "/dashboard",
-                    login_cookie(&form.username),
-                ))
+                let jar = jar.add(login_cookie(&form.username));
+                Ok((jar, axum::response::Redirect::to("/dashboard")).into_response())
             } else {
                 Ok(layout(
                     "Login",
@@ -70,17 +69,9 @@ pub async fn login_post(
     }
 }
 
-pub async fn logout_post(State(_state): State<AppState>) -> impl IntoResponse {
-    let cookie = Cookie::build(("username", ""))
-        .path("/")
-        .max_age(time::Duration::ZERO)
-        .build();
-    let mut resp = axum::response::Redirect::to("/").into_response();
-    resp.headers_mut().insert(
-        axum::http::header::SET_COOKIE,
-        cookie.to_string().parse().unwrap(),
-    );
-    resp
+pub async fn logout_post(jar: SignedCookieJar) -> impl IntoResponse {
+    let jar = jar.add(logout_cookie());
+    (jar, axum::response::Redirect::to("/"))
 }
 
 pub async fn signup(State(_state): State<AppState>) -> impl axum::response::IntoResponse {
@@ -105,6 +96,7 @@ pub struct SignupForm {
 
 pub async fn signup_post(
     State(state): State<AppState>,
+    jar: SignedCookieJar,
     Form(form): Form<SignupForm>,
 ) -> Result<axum::response::Response, AppError> {
     if form.username.trim().is_empty() {
@@ -118,10 +110,10 @@ pub async fn signup_post(
     let hash = bcrypt::hash(&form.password, bcrypt::DEFAULT_COST)?;
 
     match user::create_user(&state.db, &form.username.trim(), &hash).await {
-        Ok(()) => Ok(redirect_with_cookie(
-            "/dashboard",
-            login_cookie(&form.username),
-        )),
+        Ok(()) => {
+            let jar = jar.add(login_cookie(&form.username));
+            Ok((jar, axum::response::Redirect::to("/dashboard")).into_response())
+        }
         Err(AppError::DuplicateUser) => Ok(layout(
             "Signup",
             maud::html! {

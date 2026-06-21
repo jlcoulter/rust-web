@@ -7,6 +7,7 @@ mod pages;
 use std::str::FromStr;
 
 use axum::Router;
+use axum_extra::extract::cookie::Key;
 use sqlx::{SqlitePool, sqlite::SqliteConnectOptions};
 use tower_http::services::ServeDir;
 
@@ -24,7 +25,8 @@ async fn main() -> anyhow::Result<()> {
     let db = SqlitePool::connect_with(options).await?;
     sqlx::migrate!().run(&db).await?;
 
-    let state = crate::AppState { db };
+    let key = Key::generate();
+    let state = crate::AppState { db, key };
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
     tracing::info!("listening on {}", listener.local_addr().unwrap());
@@ -37,6 +39,7 @@ async fn main() -> anyhow::Result<()> {
 #[derive(Clone)]
 pub struct AppState {
     pub db: SqlitePool,
+    pub key: Key,
 }
 
 fn app(state: AppState) -> Router {

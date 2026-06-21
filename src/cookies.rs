@@ -1,22 +1,28 @@
 use crate::auth::LoggedInUser;
-use axum::response::IntoResponse;
-use axum_extra::extract::CookieJar;
-use axum_extra::extract::cookie::Cookie;
-
 use crate::AppState;
+use axum::extract::FromRef;
 use axum::extract::FromRequestParts;
 use axum::extract::OptionalFromRequestParts;
 use axum::http::StatusCode;
 use axum::http::request::Parts;
+use axum_extra::extract::cookie::Cookie;
+use axum_extra::extract::cookie::Key;
+use axum_extra::extract::SignedCookieJar;
+
+impl FromRef<AppState> for Key {
+    fn from_ref(state: &AppState) -> Self {
+        state.key.clone()
+    }
+}
 
 impl FromRequestParts<AppState> for LoggedInUser {
     type Rejection = StatusCode;
 
     async fn from_request_parts(
         parts: &mut Parts,
-        _state: &AppState,
+        state: &AppState,
     ) -> Result<Self, Self::Rejection> {
-        let jar = CookieJar::from_request_parts(parts, _state)
+        let jar: SignedCookieJar<Key> = SignedCookieJar::from_request_parts(parts, state)
             .await
             .map_err(|_| StatusCode::UNAUTHORIZED)?;
         jar.get("username")
@@ -32,7 +38,7 @@ impl OptionalFromRequestParts<AppState> for LoggedInUser {
         parts: &mut Parts,
         state: &AppState,
     ) -> Result<Option<Self>, Self::Rejection> {
-        let jar = CookieJar::from_request_parts(parts, state)
+        let jar: SignedCookieJar<Key> = SignedCookieJar::from_request_parts(parts, state)
             .await
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
         Ok(jar
@@ -41,18 +47,16 @@ impl OptionalFromRequestParts<AppState> for LoggedInUser {
     }
 }
 
-pub fn redirect_with_cookie(uri: &str, cookie: Cookie) -> axum::response::Response {
-    let mut resp = axum::response::Redirect::to(uri).into_response();
-    resp.headers_mut().insert(
-        axum::http::header::SET_COOKIE,
-        cookie.to_string().parse().unwrap(),
-    );
-    resp
-}
-
 pub fn login_cookie(username: &str) -> Cookie<'static> {
     Cookie::build(("username", username.to_string()))
         .http_only(true)
         .path("/")
+        .build()
+}
+
+pub fn logout_cookie() -> Cookie<'static> {
+    Cookie::build(("username", ""))
+        .path("/")
+        .max_age(time::Duration::ZERO)
         .build()
 }
