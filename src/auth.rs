@@ -37,25 +37,36 @@ pub async fn login_post(
     State(state): State<AppState>,
     Form(form): Form<LoginForm>,
 ) -> Result<axum::response::Response, AppError> {
-    let stored_hash = user::get_password_hash(&state.db, &form.username).await?;
+    match user::get_password_hash(&state.db, &form.username).await? {
+        Some(stored_hash) => {
+            let valid = bcrypt::verify(&form.password, &stored_hash)?;
 
-    let valid = bcrypt::verify(&form.password, &stored_hash)?;
-
-    if valid {
-        Ok(redirect_with_cookie(
-            "/dashboard",
-            login_cookie(&form.username),
-        ))
-    } else {
-        Ok(layout(
+            if valid {
+                Ok(redirect_with_cookie(
+                    "/dashboard",
+                    login_cookie(&form.username),
+                ))
+            } else {
+                Ok(layout(
+                    "Login",
+                    maud::html! {
+                        p { "Invalid username or password" }
+                        a href = "/login" {"Try again"}
+                    },
+                    None,
+                )
+                .into_response())
+            }
+        }
+        None => Ok(layout(
             "Login",
             maud::html! {
-                p { "Invalid username or password" }
-                a href = "/login" {"Try again"}
+                p {"Invalid username or password"}
+                a hred = "/login" {"Try again"}
             },
             None,
         )
-        .into_response())
+        .into_response()),
     }
 }
 

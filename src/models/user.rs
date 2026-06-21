@@ -1,11 +1,14 @@
 use crate::error::AppError;
 use sqlx::SqlitePool;
 
-pub async fn get_password_hash(pool: &SqlitePool, username: &str) -> Result<String, AppError> {
+pub async fn get_password_hash(
+    pool: &SqlitePool,
+    username: &str,
+) -> Result<Option<String>, AppError> {
     let hash =
         sqlx::query_scalar::<_, String>("SELECT password_hash FROM users WHERE username = ?")
             .bind(username)
-            .fetch_one(pool)
+            .fetch_optional(pool)
             .await?;
     Ok(hash)
 }
