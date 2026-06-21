@@ -16,7 +16,7 @@ pub async fn hello(
             "Loading..."
         }
                     },
-        user.as_ref().map(|u| u.0.as_str()),
+        user.as_ref(),
     )
 }
 
@@ -46,7 +46,7 @@ pub async fn dashboard(user: LoggedInUser) -> impl IntoResponse {
             }
             }
         },
-        Some(&user.0),
+        Some(&user),
     )
 }
 

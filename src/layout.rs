@@ -1,4 +1,6 @@
-pub fn layout(title: &str, content: maud::Markup, username: Option<&str>) -> maud::Markup {
+use crate::cookies::LoggedInUser;
+
+pub fn layout(title: &str, content: maud::Markup, username: Option<&LoggedInUser>) -> maud::Markup {
     maud::html! {
         html {
             head {
@@ -9,7 +11,7 @@ pub fn layout(title: &str, content: maud::Markup, username: Option<&str>) -> mau
             body {
                 header {
                     @if let Some(name) = username {
-                        span { "Hello " (name) }
+                        span { "Hello " (name.0) }
                         form action = "/logout"
                         method = "post" {
                             button type = "submit" class="btn btn-ghost" {"Logout"}
