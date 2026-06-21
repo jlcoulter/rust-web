@@ -1,5 +1,5 @@
 use crate::AppState;
-use crate::auth::LoggedInUser;
+use crate::cookies::LoggedInUser;
 use crate::layout::layout;
 use axum::extract::State;
 use axum::response::IntoResponse;
@@ -7,7 +7,7 @@ use axum::response::IntoResponse;
 pub async fn hello(
     State(_state): State<AppState>,
     user: Option<LoggedInUser>,
-) -> impl axum::response::IntoResponse {
+) -> impl IntoResponse {
     layout(
         "Home",
         maud::html! {
@@ -50,11 +50,11 @@ pub async fn dashboard(user: LoggedInUser) -> impl IntoResponse {
     )
 }
 
-pub async fn time(State(_state): State<AppState>) -> impl axum::response::IntoResponse {
+pub async fn time(State(_state): State<AppState>) -> impl IntoResponse {
     maud::html! { p { "Time: " (chrono::Local::now().format("%H:%M:%S")) } }
 }
 
-pub async fn not_found(State(_state): State<AppState>) -> impl axum::response::IntoResponse {
+pub async fn not_found(State(_state): State<AppState>) -> impl IntoResponse {
     layout(
         "Not Found",
         maud::html! {

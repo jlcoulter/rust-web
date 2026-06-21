@@ -17,8 +17,6 @@ pub struct LoginForm {
     password: String,
 }
 
-pub struct LoggedInUser(pub String);
-
 pub async fn login(State(_state): State<AppState>) -> impl axum::response::IntoResponse {
     layout(
         "Login",

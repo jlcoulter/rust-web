@@ -1,13 +1,14 @@
-use crate::auth::LoggedInUser;
 use crate::AppState;
 use axum::extract::FromRef;
 use axum::extract::FromRequestParts;
 use axum::extract::OptionalFromRequestParts;
 use axum::http::StatusCode;
 use axum::http::request::Parts;
+use axum_extra::extract::SignedCookieJar;
 use axum_extra::extract::cookie::Cookie;
 use axum_extra::extract::cookie::Key;
-use axum_extra::extract::SignedCookieJar;
+
+pub struct LoggedInUser(pub String);
 
 impl FromRef<AppState> for Key {
     fn from_ref(state: &AppState) -> Self {
