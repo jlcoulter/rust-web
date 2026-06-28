@@ -27,9 +27,7 @@ pub async fn create_user(
     match result {
         Ok(_) => Ok(()),
         Err(sqlx::Error::Database(ref db_err))
-            if db_err
-                .code()
-                .is_some_and(|c| c == SQLITE_CONSTRAINT_UNIQUE) =>
+            if db_err.code().is_some_and(|c| c == SQLITE_CONSTRAINT_UNIQUE) =>
         {
             Err(AppError::DuplicateUser)
         }
