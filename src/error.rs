@@ -1,7 +1,7 @@
+use crate::layout::error_box;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::response::Response;
-use crate::layout::error_box;
 
 pub enum AppError {
     Internal(anyhow::Error),
@@ -29,9 +29,7 @@ impl IntoResponse for AppError {
                 tracing::error!(%err, "internal error");
                 (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()
             }
-            AppError::BadRequest(msg) => {
-                (StatusCode::BAD_REQUEST, error_box(&msg)).into_response()
-            }
+            AppError::BadRequest(msg) => (StatusCode::BAD_REQUEST, error_box(&msg)).into_response(),
             AppError::Unauthorized(msg) => {
                 (StatusCode::UNAUTHORIZED, error_box(&msg)).into_response()
             }
@@ -39,5 +37,31 @@ impl IntoResponse for AppError {
                 (StatusCode::CONFLICT, error_box("Username already taken")).into_response()
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bad_request_status_code() {
+        let err = AppError::BadRequest("test error".to_string());
+        let response = err.into_response();
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    }
+
+    #[test]
+    fn unauthorized_status_code() {
+        let err = AppError::Unauthorized("no access".to_string());
+        let response = err.into_response();
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[test]
+    fn duplicate_user_status_code() {
+        let err = AppError::DuplicateUser;
+        let response = err.into_response();
+        assert_eq!(response.status(), StatusCode::CONFLICT);
     }
 }

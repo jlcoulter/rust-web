@@ -1,9 +1,9 @@
-use crate::AppState;
 use crate::cookies::login_cookie;
 use crate::cookies::logout_cookie;
 use crate::error::AppError;
 use crate::layout::layout;
 use crate::models::user;
+use crate::AppState;
 
 use axum::extract::Form;
 use axum::extract::State;
@@ -45,10 +45,14 @@ pub async fn login_post(
                 let jar = jar.add(login_cookie(&form.username));
                 Ok((jar, [("HX-Redirect", "/dashboard")]).into_response())
             } else {
-                Err(AppError::Unauthorized("Invalid username or password".to_string()))
+                Err(AppError::Unauthorized(
+                    "Invalid username or password".to_string(),
+                ))
             }
         }
-        None => Err(AppError::Unauthorized("Invalid username or password".to_string())),
+        None => Err(AppError::Unauthorized(
+            "Invalid username or password".to_string(),
+        )),
     }
 }
 
@@ -87,7 +91,9 @@ pub async fn signup_post(
         return Err(AppError::BadRequest("Username is required".to_string()));
     }
     if form.password.len() < 8 {
-        return Err(AppError::BadRequest("Password must be at least 8 characters".to_string()));
+        return Err(AppError::BadRequest(
+            "Password must be at least 8 characters".to_string(),
+        ));
     }
     let hash = bcrypt::hash(&form.password, bcrypt::DEFAULT_COST)?;
 

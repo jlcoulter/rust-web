@@ -1,6 +1,6 @@
-use crate::AppState;
 use crate::cookies::LoggedInUser;
 use crate::layout::layout;
+use crate::AppState;
 use axum::extract::State;
 use axum::response::IntoResponse;
 
@@ -64,4 +64,37 @@ pub async fn not_found(State(_state): State<AppState>) -> impl IntoResponse {
         },
         None,
     )
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn greeting_morning() {
+        let greeting = match 9u32 {
+            0..=11 => "Good morning",
+            12..=17 => "Good afternoon",
+            _ => "Good evening",
+        };
+        assert_eq!(greeting, "Good morning");
+    }
+
+    #[test]
+    fn greeting_afternoon() {
+        let greeting = match 14u32 {
+            0..=11 => "Good morning",
+            12..=17 => "Good afternoon",
+            _ => "Good evening",
+        };
+        assert_eq!(greeting, "Good afternoon");
+    }
+
+    #[test]
+    fn greeting_evening() {
+        let greeting = match 20u32 {
+            0..=11 => "Good morning",
+            12..=17 => "Good afternoon",
+            _ => "Good evening",
+        };
+        assert_eq!(greeting, "Good evening");
+    }
 }

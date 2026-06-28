@@ -1,12 +1,21 @@
-/target
+# Build
+target/
+bin/
+dist/
+
+# Database
 *.db
 *.db-shm
-.db-wal
-.env.
-.env
-*.swp
-*.swo
-*~
-.direnv/
+*.db-wal
+
+# IDE
+.idea/
 .vscode/
-.idea
+*.swp
+
+# OS
+.DS_Store
+
+# Env
+.env
+.env.local
