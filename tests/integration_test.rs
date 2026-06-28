@@ -11,5 +11,4 @@ fn app_router_constructs() {
     // We can't call app() without a real SqlitePool, but the fact that
     // this compiles proves the module structure and imports are correct.
     // The router construction itself is a compile-time check.
-    assert!(true, "lib crate compiles and exports are valid");
 }
