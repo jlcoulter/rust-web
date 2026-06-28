@@ -97,7 +97,7 @@ pub async fn signup_post(
     }
     let hash = bcrypt::hash(&form.password, bcrypt::DEFAULT_COST)?;
 
-    user::create_user(state.db(), &form.username.trim(), &hash).await?;
+    user::create_user(state.db(), form.username.trim(), &hash).await?;
     let jar = jar.add(login_cookie(&form.username));
     Ok((jar, [("HX-Redirect", "/dashboard")]).into_response())
 }

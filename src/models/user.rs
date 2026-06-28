@@ -29,7 +29,7 @@ pub async fn create_user(
         Err(sqlx::Error::Database(ref db_err))
             if db_err
                 .code()
-                .map_or(false, |c| c == SQLITE_CONSTRAINT_UNIQUE) =>
+                .is_some_and(|c| c == SQLITE_CONSTRAINT_UNIQUE) =>
         {
             Err(AppError::DuplicateUser)
         }
